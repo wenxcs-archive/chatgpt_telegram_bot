@@ -121,7 +121,10 @@ class ChatGPT:
 
                     answer = ""
                     async for r_item in r_gen:
-                        delta = r_item.choices[0].delta
+                        if len(r_item.choices) == 0:
+                            delta = ""
+                        else:
+                            delta = r_item.choices[0].delta
 
                         if "content" in delta:
                             answer += delta.content
@@ -236,6 +239,11 @@ class ChatGPT:
 
                     answer = ""
                     async for r_item in r_gen:
+                        if len(r_item.choices) == 0:
+                            delta = ""
+                        else:
+                            delta = r_item.choices[0].delta
+
                         delta = r_item.choices[0].delta
                         if "content" in delta:
                             answer += delta.content
