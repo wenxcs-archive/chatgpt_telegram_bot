@@ -6,24 +6,30 @@ import logging
 import tiktoken
 import openai
 
+from openai import AsyncAzureOpenAI
+
 
 if config.config_yaml["api_mode"] == "azure_api":
-    openai.api_type = "azure"
     azure_api = config.config_yaml["azure_api"]
 else:
     raise ValueError(f"API mode {config.config_yaml['api_mode']} is not supported")
 
 def setup_openai_api(model):
     if config.config_yaml["api_mode"] == "azure_api":
-        if model in config.azure_api:
+        if model in azure_api:
             if "key" in azure_api[model]:
-                openai.api_base = azure_api[model]["endpoint"]
-                openai.api_key = azure_api[model]["key"]
+                _model = model
             else:
-                openai.api_base = azure_api["default"]["endpoint"]
-                openai.api_key = azure_api["default"]["key"]
+                _model = "default"
+            chat_client = AsyncAzureOpenAI(
+                api_key = azure_api[_model]["key"],
+                api_version = azure_api[_model]["version"],
+                azure_endpoint = azure_api[_model]["endpoint"]
+            )
         else:
             raise ValueError(f"Model {model} is not supported in Azure API")
+        return chat_client, azure_api[model]["deployment"]
+    raise ValueError(f"API mode {config.config_yaml['api_mode']} is not supported")
 
 # setup openai
 openai.api_key = config.openai_api_key
@@ -48,7 +54,7 @@ class ChatGPT:
         self.model = model
 
     async def send_message(self, message, dialog_messages=[], chat_mode="assistant"):
-        setup_openai_api(self.model)
+        chat_client, az_model = setup_openai_api(self.model)
 
         if chat_mode not in config.chat_modes.keys():
             raise ValueError(f"Chat mode {chat_mode} is not supported")
@@ -60,8 +66,9 @@ class ChatGPT:
                 if self.model in {"gpt-3.5-turbo-16k", "gpt-3.5-turbo", "gpt-4", "gpt-4o", "gpt-4-turbo", "gpt-4-vision"}:
                     messages = self._generate_prompt_messages(message, dialog_messages, chat_mode)
 
-                    r = await openai.ChatCompletion.acreate(
-                        model=self.model,
+                    r = await chat_client.chat.completions.acreate(
+                        # model=self.model,
+                        engine = az_model,
                         messages=messages,
                         **OPENAI_COMPLETION_OPTIONS
                     )
@@ -69,7 +76,8 @@ class ChatGPT:
                 elif self.model == "text-davinci-003":
                     prompt = self._generate_prompt(message, dialog_messages, chat_mode)
                     r = await openai.Completion.acreate(
-                        engine=self.model,
+                        #engine=self.model,
+                        engine = az_model,
                         prompt=prompt,
                         **OPENAI_COMPLETION_OPTIONS
                     )
@@ -91,7 +99,7 @@ class ChatGPT:
         return answer, (n_input_tokens, n_output_tokens), n_first_dialog_messages_removed
 
     async def send_message_stream(self, message, dialog_messages=[], chat_mode="assistant"):
-        setup_openai_api(self.model)
+        az_model = setup_openai_api(self.model)
         if chat_mode not in config.chat_modes.keys():
             raise ValueError(f"Chat mode {chat_mode} is not supported")
 
@@ -103,7 +111,8 @@ class ChatGPT:
                     messages = self._generate_prompt_messages(message, dialog_messages, chat_mode)
 
                     r_gen = await openai.ChatCompletion.acreate(
-                        model=self.model,
+                        # model=self.model,
+                        engine = az_model,
                         messages=messages,
                         stream=True,
                         **OPENAI_COMPLETION_OPTIONS
@@ -124,7 +133,8 @@ class ChatGPT:
                 elif self.model == "text-davinci-003":
                     prompt = self._generate_prompt(message, dialog_messages, chat_mode)
                     r_gen = await openai.Completion.acreate(
-                        engine=self.model,
+                        #engine=self.model,
+                        engine = az_model,
                         prompt=prompt,
                         stream=True,
                         **OPENAI_COMPLETION_OPTIONS
@@ -155,7 +165,7 @@ class ChatGPT:
         chat_mode="assistant",
         image_buffer: BytesIO = None,
     ):
-        setup_openai_api(self.model)
+        az_model = setup_openai_api(self.model)
         n_dialog_messages_before = len(dialog_messages)
         answer = None
         while answer is None:
@@ -165,7 +175,8 @@ class ChatGPT:
                         message, dialog_messages, chat_mode, image_buffer
                     )
                     r = await openai.ChatCompletion.acreate(
-                        model=self.model,
+                        # model=self.model,
+                        engine = az_model,
                         messages=messages,
                         **OPENAI_COMPLETION_OPTIONS
                     )
@@ -204,7 +215,7 @@ class ChatGPT:
         chat_mode="assistant",
         image_buffer: BytesIO = None,
     ):
-        setup_openai_api(self.model)
+        az_model = setup_openai_api(self.model)
         n_dialog_messages_before = len(dialog_messages)
         answer = None
         while answer is None:
@@ -215,7 +226,8 @@ class ChatGPT:
                     )
                     
                     r_gen = await openai.ChatCompletion.acreate(
-                        model=self.model,
+                        # model=self.model,
+                        engine = az_model,
                         messages=messages,
                         stream=True,
                         **OPENAI_COMPLETION_OPTIONS,
