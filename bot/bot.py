@@ -453,7 +453,11 @@ async def message_handle(update: Update, context: CallbackContext, message=None,
             raise
 
         except Exception as e:
-            error_text = f"Something went wrong during completion. Reason: {e}"
+            tb_lines = traceback.extract_tb(e.__traceback__)
+            last_call = tb_lines[-1]
+            filename, lineno, funcname, text = last_call
+
+            error_text = f"Something went wrong during completion. Reason: {e}. Exception occurred in file '{filename}', line {lineno}, in {funcname}, {text}"
             logger.error(error_text)
             await update.message.reply_text(error_text)
             return
