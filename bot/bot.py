@@ -185,9 +185,9 @@ async def _vision_message_handle_fn(
     user_id = update.message.from_user.id
     current_model = db.get_user_attribute(user_id, "current_model")
 
-    if current_model != "gpt-4-vision-preview" and current_model != "gpt-4o":
+    if current_model != "gpt-4-vision" and current_model != "gpt-4o":
         await update.message.reply_text(
-            "🥲 Images processing is only available for <b>gpt-4-vision-preview</b> and <b>gpt-4o</b> model. Please change your settings in /settings",
+            "🥲 Images processing is only available for <b>gpt-4-vision</b> and <b>gpt-4o</b> model. Please change your settings in /settings",
             parse_mode=ParseMode.HTML,
         )
         return
@@ -459,12 +459,12 @@ async def message_handle(update: Update, context: CallbackContext, message=None,
             await update.message.reply_text(text, parse_mode=ParseMode.HTML)
 
     async with user_semaphores[user_id]:
-        if current_model == "gpt-4-vision-preview" or current_model == "gpt-4o" or update.message.photo is not None and len(update.message.photo) > 0:
+        if current_model == "gpt-4-vision" or current_model == "gpt-4o" or update.message.photo is not None and len(update.message.photo) > 0:
 
             logger.error(current_model)
             # What is this? ^^^
 
-            if current_model != "gpt-4o" and current_model != "gpt-4-vision-preview":
+            if current_model != "gpt-4o" and current_model != "gpt-4-vision":
                 current_model = "gpt-4o"
                 db.set_user_attribute(user_id, "current_model", "gpt-4o")
             task = asyncio.create_task(

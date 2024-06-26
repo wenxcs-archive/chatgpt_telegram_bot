@@ -7,6 +7,24 @@ import tiktoken
 import openai
 
 
+if config.config_yaml["api_mode"] == "azure_api":
+    openai.api_type = "azure"
+    azure_api = config.config_yaml["azure_api"]
+else:
+    raise ValueError(f"API mode {config.config_yaml['api_mode']} is not supported")
+
+def setup_openai_api(model):
+    if config.config_yaml["api_mode"] == "azure_api":
+        if model in config.azure_api:
+            if "key" in azure_api[model]:
+                openai.api_base = azure_api[model]["endpoint"]
+                openai.api_key = azure_api[model]["key"]
+            else:
+                openai.api_base = azure_api["default"]["endpoint"]
+                openai.api_key = azure_api["default"]["key"]
+        else:
+            raise ValueError(f"Model {model} is not supported in Azure API")
+
 # setup openai
 openai.api_key = config.openai_api_key
 if config.openai_api_base is not None:
@@ -26,10 +44,12 @@ OPENAI_COMPLETION_OPTIONS = {
 
 class ChatGPT:
     def __init__(self, model="gpt-3.5-turbo"):
-        assert model in {"text-davinci-003", "gpt-3.5-turbo-16k", "gpt-3.5-turbo", "gpt-4", "gpt-4o", "gpt-4-1106-preview", "gpt-4-vision-preview"}, f"Unknown model: {model}"
+        assert model in {"text-davinci-003", "gpt-3.5-turbo-16k", "gpt-3.5-turbo", "gpt-4", "gpt-4o", "gpt-4-turbo", "gpt-4-vision"}, f"Unknown model: {model}"
         self.model = model
 
     async def send_message(self, message, dialog_messages=[], chat_mode="assistant"):
+        setup_openai_api(self.model)
+
         if chat_mode not in config.chat_modes.keys():
             raise ValueError(f"Chat mode {chat_mode} is not supported")
 
@@ -37,7 +57,7 @@ class ChatGPT:
         answer = None
         while answer is None:
             try:
-                if self.model in {"gpt-3.5-turbo-16k", "gpt-3.5-turbo", "gpt-4", "gpt-4o", "gpt-4-1106-preview", "gpt-4-vision-preview"}:
+                if self.model in {"gpt-3.5-turbo-16k", "gpt-3.5-turbo", "gpt-4", "gpt-4o", "gpt-4-turbo", "gpt-4-vision"}:
                     messages = self._generate_prompt_messages(message, dialog_messages, chat_mode)
 
                     r = await openai.ChatCompletion.acreate(
@@ -71,6 +91,7 @@ class ChatGPT:
         return answer, (n_input_tokens, n_output_tokens), n_first_dialog_messages_removed
 
     async def send_message_stream(self, message, dialog_messages=[], chat_mode="assistant"):
+        setup_openai_api(self.model)
         if chat_mode not in config.chat_modes.keys():
             raise ValueError(f"Chat mode {chat_mode} is not supported")
 
@@ -78,7 +99,7 @@ class ChatGPT:
         answer = None
         while answer is None:
             try:
-                if self.model in {"gpt-3.5-turbo-16k", "gpt-3.5-turbo", "gpt-4","gpt-4o", "gpt-4-1106-preview"}:
+                if self.model in {"gpt-3.5-turbo-16k", "gpt-3.5-turbo", "gpt-4","gpt-4o", "gpt-4-turbo"}:
                     messages = self._generate_prompt_messages(message, dialog_messages, chat_mode)
 
                     r_gen = await openai.ChatCompletion.acreate(
@@ -134,11 +155,12 @@ class ChatGPT:
         chat_mode="assistant",
         image_buffer: BytesIO = None,
     ):
+        setup_openai_api(self.model)
         n_dialog_messages_before = len(dialog_messages)
         answer = None
         while answer is None:
             try:
-                if self.model == "gpt-4-vision-preview" or self.model == "gpt-4o":
+                if self.model == "gpt-4-vision" or self.model == "gpt-4o":
                     messages = self._generate_prompt_messages(
                         message, dialog_messages, chat_mode, image_buffer
                     )
@@ -182,11 +204,12 @@ class ChatGPT:
         chat_mode="assistant",
         image_buffer: BytesIO = None,
     ):
+        setup_openai_api(self.model)
         n_dialog_messages_before = len(dialog_messages)
         answer = None
         while answer is None:
             try:
-                if self.model == "gpt-4-vision-preview" or self.model == "gpt-4o":
+                if self.model == "gpt-4-vision" or self.model == "gpt-4o":
                     messages = self._generate_prompt_messages(
                         message, dialog_messages, chat_mode, image_buffer
                     )
@@ -301,10 +324,10 @@ class ChatGPT:
         elif model == "gpt-4":
             tokens_per_message = 3
             tokens_per_name = 1
-        elif model == "gpt-4-1106-preview":
+        elif model == "gpt-4-turbo":
             tokens_per_message = 3
             tokens_per_name = 1
-        elif model == "gpt-4-vision-preview":
+        elif model == "gpt-4-vision":
             tokens_per_message = 3
             tokens_per_name = 1
         elif model == "gpt-4o":

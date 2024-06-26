@@ -1,4 +1,4 @@
-available_text_models: ["gpt-3.5-turbo", "gpt-3.5-turbo-16k", "gpt-4-1106-preview", "gpt-4-vision-preview", "gpt-4", "text-davinci-003", "gpt-4o"]
+available_text_models: ["gpt-3.5-turbo", "gpt-4-turbo", "gpt-4-vision", "gpt-4", "gpt-4o"]
 
 info:
   gpt-3.5-turbo:
@@ -39,8 +39,21 @@ info:
       Smart: 5
       Fast: 2
       Cheap: 2
+    
+  gpt-4-32k:
+    type: chat_completion
+    name: GPT-4-32K
+    description: GPT-4 is the <b>smartest</b> and most advanced model in the world. But it is slower and not as cost-efficient as ChatGPT. Best choice for <b>complex</b> intellectual tasks.
 
-  gpt-4-1106-preview:
+    price_per_1000_input_tokens: 0.03
+    price_per_1000_output_tokens: 0.06
+
+    scores:
+      Smart: 5
+      Fast: 2
+      Cheap: 2
+
+  gpt-4-turbo:
     type: chat_completion
     name: GPT-4 Turbo
     description: GPT-4 Turbo is a <b>faster</b> and <b>cheaper</b> version of GPT-4. It's as smart as GPT-4, so you should use it instead of GPT-4.
@@ -53,7 +66,7 @@ info:
       fast: 4
       cheap: 3
 
-  gpt-4-vision-preview:
+  gpt-4-vision:
     type: chat_completion
     name: GPT-4 Vision
     description: Ability to <b>understand images</b>, in addition to all other GPT-4 Turbo capabilties.
@@ -65,6 +78,7 @@ info:
       smart: 5
       fast: 4
       cheap: 3
+
   gpt-4o:
     type: chat_completion
     name: GPT-4o
@@ -92,6 +106,10 @@ info:
       Cheap: 3
 
   dalle-2:
+     type: image
+     price_per_1_image: 0.018  # 512x512
+    
+  dall-e-3:
      type: image
      price_per_1_image: 0.018  # 512x512
 
