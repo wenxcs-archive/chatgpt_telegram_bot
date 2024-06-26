@@ -8,6 +8,7 @@ import openai
 
 from openai import AsyncAzureOpenAI
 
+from openai._exceptions import OpenAIError, BadRequestError, AuthenticationError, PermissionDeniedError, NotFoundError, ConflictError, UnprocessableEntityError, RateLimitError, InternalServerError
 
 if config.config_yaml["api_mode"] == "azure_api":
     azure_api = config.config_yaml["azure_api"]
@@ -44,7 +45,6 @@ OPENAI_COMPLETION_OPTIONS = {
     "top_p": 1,
     "frequency_penalty": 0,
     "presence_penalty": 0,
-    "request_timeout": 60.0,
 }
 
 
@@ -87,7 +87,7 @@ class ChatGPT:
 
                 answer = self._postprocess_answer(answer)
                 n_input_tokens, n_output_tokens = r.usage.prompt_tokens, r.usage.completion_tokens
-            except openai.error.InvalidRequestError as e:  # too many tokens
+            except BadRequestError as e:  # too many tokens
                 if len(dialog_messages) == 0:
                     raise ValueError("Dialog messages is reduced to zero, but still has too many tokens to make completion") from e
 
@@ -149,7 +149,7 @@ class ChatGPT:
 
                 answer = self._postprocess_answer(answer)
 
-            except openai.error.InvalidRequestError as e:  # too many tokens
+            except BadRequestError as e:  # too many tokens
                 if len(dialog_messages) == 0:
                     raise e
 
@@ -189,7 +189,7 @@ class ChatGPT:
                     r.usage.prompt_tokens,
                     r.usage.completion_tokens,
                 )
-            except openai.error.InvalidRequestError as e:  # too many tokens
+            except BadRequestError as e:  # too many tokens
                 if len(dialog_messages) == 0:
                     raise ValueError(
                         "Dialog messages is reduced to zero, but still has too many tokens to make completion"
@@ -254,7 +254,7 @@ class ChatGPT:
 
                 answer = self._postprocess_answer(answer)
 
-            except openai.error.InvalidRequestError as e:  # too many tokens
+            except BadRequestError as e:  # too many tokens
                 if len(dialog_messages) == 0:
                     raise e
                 # forget first message in dialog_messages
