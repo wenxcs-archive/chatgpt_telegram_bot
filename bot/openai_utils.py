@@ -122,12 +122,12 @@ class ChatGPT:
                     answer = ""
                     async for r_item in r_gen:
                         if len(r_item.choices) == 0:
-                            delta = ""
+                            delta = {"content": ""}
                         else:
                             delta = r_item.choices[0].delta
 
                         if "content" in delta:
-                            answer += delta.content
+                            answer += delta.content if delta is not dict else delta["content"]
                             n_input_tokens, n_output_tokens = self._count_tokens_from_messages(messages, answer, model=self.model)
                             n_first_dialog_messages_removed = 0
 
@@ -240,13 +240,13 @@ class ChatGPT:
                     answer = ""
                     async for r_item in r_gen:
                         if len(r_item.choices) == 0:
-                            delta = ""
+                            delta = {"content": ""}
                         else:
                             delta = r_item.choices[0].delta
 
                         delta = r_item.choices[0].delta
                         if "content" in delta:
-                            answer += delta.content
+                            answer += delta.content if delta is not dict else delta["content"]
                             (
                                 n_input_tokens,
                                 n_output_tokens,
